@@ -57,15 +57,10 @@
     tapPoint = FBInvertPointForApplication(tapPoint, application.frame.size, application.interfaceOrientation);
   }
   XCUICoordinate *appCoordinate = [[XCUICoordinate alloc] initWithElement:application normalizedOffset:CGVectorMake(0, 0)];
-  tapPoint = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:CGVectorMake(tapPoint.x, tapPoint.y)].screenPoint;
-  dispatch_semaphore_t t = dispatch_semaphore_create(0);
-  [[XCEventGenerator sharedGenerator] pressAtPoint:tapPoint forDuration:0 orientation:application.interfaceOrientation handler:^(XCSynthesizedEventRecord *record, NSError *error) {
-    dispatch_semaphore_signal(t);
-  }];
-  dispatch_semaphore_wait(t, DISPATCH_TIME_FOREVER);
+  XCUICoordinate *coordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:CGVectorMake(tapPoint.x, tapPoint.y)];
+  [coordinate tap];
   return FBResponseWithOK();
 }
-
 
 + (id<FBResponsePayload>)handlePrivateSwipe:(FBRouteRequest *)request{
   FBApplication *application = request.session.activeApplication ?: FBApplication.fb_activeApplication;
@@ -79,11 +74,11 @@
   fromPoint = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:CGVectorMake(fromPoint.x, fromPoint.y)].screenPoint;
   toPoint = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:CGVectorMake(toPoint.x, toPoint.y)].screenPoint;
   
-  dispatch_semaphore_t t = dispatch_semaphore_create(0);
-  [[XCEventGenerator sharedGenerator] pressAtPoint:fromPoint forDuration:[request.arguments[@"duration"] doubleValue] liftAtPoint:toPoint velocity:1000 orientation:application.interfaceOrientation name:@"MonkeySwipe" handler:^(XCSynthesizedEventRecord *record, NSError *error) {
-    dispatch_semaphore_signal(t);
-  }];
-  dispatch_semaphore_wait(t, DISPATCH_TIME_FOREVER);
+  XCUICoordinate *fromCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:CGVectorMake(fromPoint.x, fromPoint.y)];
+  XCUICoordinate *toCoordinate = [[XCUICoordinate alloc] initWithCoordinate:appCoordinate pointsOffset:CGVectorMake(toPoint.x, toPoint.y)];
+
+  [fromCoordinate pressForDuration:0 thenDragToCoordinate:toCoordinate];
+  
   return FBResponseWithOK();
 }
 
@@ -95,11 +90,7 @@
                            (CGFloat)[request.arguments[@"width"] doubleValue],
                            (CGFloat)[request.arguments[@"height"] doubleValue]);
   
-  dispatch_semaphore_t t = dispatch_semaphore_create(0);
-  [[XCEventGenerator sharedGenerator] pinchInRect:rect withScale:[request.arguments[@"scale"] doubleValue] velocity:1000 orientation:application.interfaceOrientation handler:^(XCSynthesizedEventRecord *record, NSError *error) {
-    dispatch_semaphore_signal(t);
-  }];
-  dispatch_semaphore_wait(t, DISPATCH_TIME_FOREVER);
+
   return FBResponseWithOK();
 }
 
@@ -109,9 +100,9 @@
   CGPoint tapPoint = CGPointMake((CGFloat)[request.arguments[@"x"] doubleValue], (CGFloat)[request.arguments[@"y"] doubleValue]);
   
   dispatch_semaphore_t t = dispatch_semaphore_create(0);
-  [[XCEventGenerator sharedGenerator] pressAtPoint:tapPoint forDuration:[request.arguments[@"duration"] doubleValue] orientation:application.interfaceOrientation handler:^(XCSynthesizedEventRecord *record, NSError *error) {
-    dispatch_semaphore_signal(t);
-  }];
+//  [[XCEventGenerator sharedGenerator] pressAtPoint:tapPoint forDuration:[request.arguments[@"duration"] doubleValue] orientation:application.interfaceOrientation handler:^(XCSynthesizedEventRecord *record, NSError *error) {
+//    dispatch_semaphore_signal(t);
+//  }];
   dispatch_semaphore_wait(t, DISPATCH_TIME_FOREVER);
   return FBResponseWithOK();
 }
